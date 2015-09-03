@@ -1,18 +1,19 @@
 var AvoidRainGame = {};
 var canvas= document.querySelector('.canvas');
 var ctx = canvas.getContext('2d');
-var gameStatus = true;
+// var gameStatus = true;
 
-//rain
+//rainArray
 AvoidRainGame.RainArray =[];
 
-setInterval(function(){
+var newDrops = setInterval(function(){
 	console.log("in");
 	for(var i=0; i< 10;i++){
 		AvoidRainGame.RainArray.push(new AvoidRainGame.Rain());
 	} 
 },1000);
 
+//rain
 AvoidRainGame.Rain = function(){
 	this.rainPosX = this.setRainPosX();
 	this.rainPosY = this.setRainPosY();
@@ -29,13 +30,14 @@ AvoidRainGame.Rain.prototype.setRainPosY = function(){
 AvoidRainGame.Rain.prototype.isFalling = function(){
 	//array에 있는 비를 하나씩 꺼내서 각각 떨어뜨려준다.
 	var fallAmount =3;
-	if(this.rainPosY < canvas.height){
+	if(this.rainPosY < 2 * canvas.height){
 		//set falling = true;
 		return this.rainPosY = this.rainPosY + fallAmount;
 	}else{
 		//add point
 		//delete rain
 		//set falling = false;
+		AvoidRainGame.RainArray.shift();
 		console.log("end");
 		return;
 	}
@@ -56,11 +58,21 @@ AvoidRainGame.Rain.prototype.draw = function(){
 //character
 AvoidRainGame.Player = (function(){
 	var playerHeight = 100;
+	var playerWidth =20;
 	var playerPosX = canvas.width/2;
 	var playerPosY = canvas.height - playerHeight;
-	var step = 5;
+	var step = 15;
 
 	return{
+		getPosX: function(){
+			return playerPosX;
+		},
+		getPosY: function(){
+			return playerPosY;
+		},
+		getWidth: function(){
+			return playerWidth;
+		},
 		moveLeft: function(){
 			return playerPosX = playerPosX - step;
 		},
@@ -70,7 +82,7 @@ AvoidRainGame.Player = (function(){
 		draw: function(){
 			ctx.beginPath();
 		    ctx.fillStyle = '#9C2765';
-		    ctx.fillRect(playerPosX, playerPosY, 20, playerHeight);
+		    ctx.fillRect(playerPosX, playerPosY, playerWidth, playerHeight);
 		    ctx.closePath();
 		},
 		getPlayerPosX: function(){
@@ -80,6 +92,36 @@ AvoidRainGame.Player = (function(){
 
 })();
 
+//success or fail Logic
+AvoidRainGame.GameStats = (function(){
+	var status = true;
+	//if dead, set status to false and stop animation frame
+	var score =0;
+
+	return{
+		checkCollision: function(){
+			for(var i=0; i< AvoidRainGame.RainArray.length; i++){
+				if((AvoidRainGame.RainArray[i].rainPosY + 5 >= AvoidRainGame.Player.getPosY()) && (AvoidRainGame.RainArray[i].rainPosX - 5 <=AvoidRainGame.Player.getPosX() + AvoidRainGame.Player.getWidth() && AvoidRainGame.RainArray[i].rainPosX + 5 >= AvoidRainGame.Player.getPosX())){
+					this.failMessage();
+				}
+			}
+		},
+		resetStatus: function(){
+			status = true;
+			score = 0;
+		},
+		failMessage: function(){
+			// doucument.getElementById('showGameStatus').style.display = "block";
+			console.log("fail");
+			status = false;
+		},
+		getStatus: function(){
+			return status;
+		}
+	}
+})();
+
+//draw all on canvas; animation
 AvoidRainGame.drawAll = function(){
 	ctx.clearRect(0,0,canvas.width, canvas.height);
 	//put rain into array and draw all of them
@@ -88,10 +130,12 @@ AvoidRainGame.drawAll = function(){
 		AvoidRainGame.RainArray[i].draw();
 	}
 	AvoidRainGame.Player.draw();
-	if(gameStatus == true){
+	AvoidRainGame.GameStats.checkCollision();
+	if(AvoidRainGame.GameStats.getStatus() == true){
 		AvoidRainGame.requestAnimationFrame = window.requestAnimationFrame(AvoidRainGame.drawAll);
 	}else{
 		window.cancelAnimationFrame(AvoidRainGame.requestAnimationFrame);
+		clearInterval(newDrops);
 	}
 };
 
@@ -99,7 +143,9 @@ function rand(min, max){
 	return (Math.random()*(max -min) + min);
 };
 
-for(var i=0; i< 30;i++){
+
+//Putting in the very first 10 raindrops at start
+for(var i=0; i< 10;i++){
 		AvoidRainGame.RainArray.push(new AvoidRainGame.Rain());
 	} 
 //added event to move with keys
@@ -117,4 +163,4 @@ function stepLeftOrRight(e){
 }
 
 window.requestAnimationFrame(AvoidRainGame.drawAll);
-//////
+////////
