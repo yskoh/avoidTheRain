@@ -36,11 +36,12 @@ AvoidRainGame.Rain.prototype.isFalling = function(){
 	var fallAmount =3;
 	// if(this.rainPosY < canvas.height - this.firstSetY){
 	if(this.rainPosY > canvas.height){
-		AvoidRainGame.RainArray.shift();
 		AvoidRainGame.GameStats.addScore();
 		console.log("end");
+		return true;
 	}else{
-		return this.rainPosY = this.rainPosY + fallAmount;
+		this.rainPosY = this.rainPosY + fallAmount;
+		return false;
 	}
 };
 AvoidRainGame.Rain.prototype.draw = function(){
@@ -132,8 +133,13 @@ AvoidRainGame.GameStats = (function(){
 AvoidRainGame.drawAll = function(){
 	ctx.clearRect(0,0,canvas.width, canvas.height);
 	//put rain into array and draw all of them
-	for(var i =0; i<AvoidRainGame.RainArray.length; i++){
-		AvoidRainGame.RainArray[i].isFalling();
+	for(var i =AvoidRainGame.RainArray.length-1; i>=0; i--){
+		//뒤에서부터 세는 이유는 위로 셀 경우, 중간의 것을 뺏으면, -1을 배열 안 다른 것들의 원래 index값에서 빼야함. 
+		//true, false를 return하여 땅에 닿은 것의 index를 이용하여 그것을 배열에서 뺀다.
+		if(AvoidRainGame.RainArray[i].isFalling()){
+			AvoidRainGame.RainArray.splice(i, 1);
+		}
+		
 		AvoidRainGame.RainArray[i].draw();
 	}
 	AvoidRainGame.Player.draw();
